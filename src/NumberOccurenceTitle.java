@@ -24,11 +24,11 @@ public class NumberOccurenceTitle {
 	
 	public static class Map extends MapReduceBase implements Mapper<LongWritable,Text, Text, IntWritable>{
 		private final static IntWritable one = new IntWritable(1);
-		private Text year = new Text();
+		private Text title = new Text();
 		public void map(LongWritable key, Text value,OutputCollector<Text, IntWritable> output, Reporter reporter) throws IOException{
 			String line = value.toString();
-			year.set(line.split("\\(")[0]);
-			output.collect(year, one);
+			title.set(line.split("\\(")[0]);
+			output.collect(title, one);
 		}
 	}
 	public static class Reduce extends MapReduceBase implements Reducer<Text, IntWritable,Text, IntWritable>{
