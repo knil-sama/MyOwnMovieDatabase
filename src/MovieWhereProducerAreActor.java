@@ -24,7 +24,7 @@ public class MovieWhereProducerAreActor {
 			String[] splitByTab = line.split("\t");
 			actor.set(splitByTab[0]);
 			try{
-			title.set(splitByTab[1].split("\\(")[1]);
+			title.set(splitByTab[1].split("\\(")[0]);
 			context.write(actor,title);
 			}catch(ArrayIndexOutOfBoundsException e){
 				e.printStackTrace();
@@ -38,7 +38,7 @@ public class MovieWhereProducerAreActor {
 				moviePlayOrProduceByActor.add(value.toString());
 			}
 			String movie;
-			while(moviePlayOrProduceByActor.size() > 1){
+			while(moviePlayOrProduceByActor.size() >1){
 				movie = moviePlayOrProduceByActor.get(0);
 				int numberMovieLeft = moviePlayOrProduceByActor.size();
 				for(int i = 0; i < numberMovieLeft; i ++){
@@ -49,6 +49,7 @@ public class MovieWhereProducerAreActor {
 				}
 				moviePlayOrProduceByActor.remove(0);
 			}
+			moviePlayOrProduceByActor.remove(0);
 		}
 	}
 	
