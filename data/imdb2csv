@@ -1,0 +1,47 @@
+#!/usr/bin/perl
+#imdb_personnel.pl by ghr
+#this script cleans IMDB personnel files (eg, writers.list)
+#works best if you delete the header (about the first 300 lines)
+#raw data is organized by artist with
+# "ARTIST\t\tCREDIT" for the first credit (though sometimes w a single tab) and
+# subsequent records are "\t\t\tCREDIT"
+#this script makes all rows "ARTIST\tCREDIT" and drops blank rows
+#the resulting file is about 20% larger than the original but has a simpler structure that is easier for other programs (eg Stata) to read
+#further cleaning would parse the "CREDIT" field but the contents of "CREDIT" 
+#vary by personnel file
+#in all files "CREDIT" begins with "FILM TITLE (YEAR)" but has further info
+# eg, writers.list distinguishes screenplay vs story, etc and actors.list gives character name, etc
+ 
+use warnings; use strict;
+die "usage: imdb_personnel.pl <IMDB personnel file>\n" unless @ARGV==1;
+my $rawdata = shift(@ARGV);
+ 
+# if $_ matches leading non-tab, redefine the "artist" variable
+# if $_ matches 3 leading tabs, drop two tabs and add current "artist"
+my $artist ;
+open(IN, "<$rawdata") or die "error opening $rawdata for reading\n";
+open(OUT, ">$rawdata.tsv") or die "error creating $rawdata.tsv\n";
+print OUT "artist\tcredit\n";
+while (<IN>) {
+    #match beginning of artist's credits by looking for lines NOT beginning with a tab
+    if($_=~ /^[^\t].+\t.+/) {
+        $artist = $_; 
+        $artist =~ s/\015?\012//; #manual chomp
+        $artist =~ s/\t.+$//; #drop the tab(s) and all else after it 
+        $_ =~ s/\t\t/\t/; #go from two tabs to one
+        print OUT "$_";
+    }
+    #match subsequent credits (three leading tabs)
+    if ($_ =~ m/^\t\t\t/) {
+        $_ =~ s/^\t\t\t//; #drop leading tabs
+        print OUT "$artist\t$_";
+    }
+    #when matching blank line, clear "artist"
+    if ($_ =~ m/^$/) {
+        $artist = "";
+    }
+}
+close IN;
+close OUT;
+print "\ndone\n";
+#have a nice day

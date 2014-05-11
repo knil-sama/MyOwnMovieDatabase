@@ -27,7 +27,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  a moins de definir vous meme vos types en implementant  WritableComparable, les types predefinis 
  IntWritable,  LongWritable, Text, etc.  sont tous dans org.apache.hadoop.io. */
 
-public class TopTen {
+public class TopTenFile {
 	private static String wordResearch; 
 	static class Map extends Mapper<Text, Text, Text, Text> {
 		TreeMap<Double, String> podium = new TreeMap<Double, String>();
