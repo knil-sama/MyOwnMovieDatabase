@@ -58,7 +58,7 @@ public class FrequencyWordInFile {
 				numberOccurence = filenameAndOccurenceAndSum.substring(filenameAndOccurenceAndSum.lastIndexOf("/")+1);
 				frequencyWordInFile++;
 			}
-			// for file we write the ouput with the frequency we compute previously
+			// for file we write the output with the frequency we compute previously
 			while(iter.hasNext()){
 				filenameAndOccurenceAndSum = iter.next();
 				firstIndex = filenameAndOccurenceAndSum.indexOf(separator);
