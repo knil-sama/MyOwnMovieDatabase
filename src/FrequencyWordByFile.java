@@ -5,6 +5,7 @@ import java.lang.InterruptedException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 
@@ -25,20 +26,36 @@ public class FrequencyWordByFile {
 	public static String separator = new String("/");
 	
 	static class Map extends Mapper<Text, Text, Text, Text> {
+		String filenameAndWord;
+		String filename;
+		String word;
+		Text keyOutputMap = new Text();
+		Text valueOutputMap = new Text();
 		/**
 		 * @input	filename/word	numberOccurence/numberOccurenceForFile
 		 * @output 	filename	word/numberOccurence/NumberWordInFile
 		 */
 		public void map(Text clef, Text valeur, Context context)
 				throws IOException, InterruptedException {
-			String filenameAndWord = clef.toString();
+			filenameAndWord = clef.toString();
 			int indexSeparator = filenameAndWord.indexOf(separator);
-            String filename = filenameAndWord.substring(0,indexSeparator);
-            String word = filenameAndWord.substring(indexSeparator+1);
-			context.write(new Text(word),   new Text(filename + separator + valeur.toString()));
+            filename = filenameAndWord.substring(0,indexSeparator);
+            word = filenameAndWord.substring(indexSeparator+1);
+            keyOutputMap.set(word);
+            valueOutputMap.set(filename + separator + valeur.toString());
+			context.write(keyOutputMap, valueOutputMap);
 		}
 	}
 	public static class Reduce extends Reducer<Text, Text, Text, Text> {
+		ArrayList<String> filenameAndOccurenceAndSumList;
+		String filenameAndOccurenceAndSum;
+		String numberOccurence;
+		Iterator<String> iter;
+		Iterator<Text> iteratorValue;
+		String word, filename, sumOccurence;
+		Text value = new Text();
+		Text outputKeyReduce = new Text();
+		Text outputValueReduce = new Text();
 		/**
 		 * @input word	filename/numberOccurence/numberWordByFile
 		 * @output filename/word	numberOccurence/numberOccurenceForFile
@@ -46,14 +63,16 @@ public class FrequencyWordByFile {
 		public void reduce(Text clef, Iterable<Text> valeurs, Context context)
 				throws IOException, InterruptedException {
 			int frequencyWordInFile = 0;
-			ArrayList<String> filenameAndOccurenceAndSumList = new ArrayList<String>();
-			String filenameAndOccurenceAndSum = null, numberOccurence;
-			Iterator<String> iter = filenameAndOccurenceAndSumList.iterator();
-			String word = clef.toString(), filename, sumOccurence;
+			filenameAndOccurenceAndSumList = new ArrayList<String>();
+			filenameAndOccurenceAndSum = null;
+			iter = filenameAndOccurenceAndSumList.iterator();
+			iteratorValue = valeurs.iterator();
+			word = clef.toString();
 			int firstIndex,lastIndex;
-			// we made the sum of every occurence for each file for a word
-			for (Text val : valeurs) {
-				filenameAndOccurenceAndSum = val.toString();
+			// we made the sum of every occurrence for each file for a word
+			while(iteratorValue.hasNext()) {
+				value.set(iteratorValue.next());
+				filenameAndOccurenceAndSum = value.toString();
 				filenameAndOccurenceAndSumList.add(filenameAndOccurenceAndSum);
 				numberOccurence = filenameAndOccurenceAndSum.substring(filenameAndOccurenceAndSum.lastIndexOf("/")+1);
 				frequencyWordInFile++;
@@ -66,15 +85,19 @@ public class FrequencyWordByFile {
 				filename = filenameAndOccurenceAndSum.substring(0,firstIndex);
 				numberOccurence = filenameAndOccurenceAndSum.substring(firstIndex+1,lastIndex);
 				sumOccurence = filenameAndOccurenceAndSum.substring(lastIndex + 1);
-				context.write(new Text(filename + separator + word),new Text(numberOccurence + separator + sumOccurence + separator +String.valueOf(frequencyWordInFile)));
+				outputKeyReduce.set(filename + separator + word);
+				outputValueReduce.set(numberOccurence + separator + sumOccurence + separator +String.valueOf(frequencyWordInFile));
+				context.write(outputKeyReduce,outputValueReduce);
 			}
 		}
 	}
 
 	public static void main(String args[]) throws Exception {
 
+		Configuration conf = new Configuration();
+		conf.set("mapreduce.map.output.compress","true");
 		@SuppressWarnings("deprecation")
-		Job job = new Job();
+		Job job = new Job(conf);
 		job.setJarByClass(FrequencyWordByFile.class);
 
 		FileInputFormat.addInputPath(job, new Path(args[0]));

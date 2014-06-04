@@ -2,8 +2,10 @@ package src;
 
 import java.io.IOException;
 import java.lang.InterruptedException;
+import java.util.Iterator;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.LongWritable;
@@ -26,30 +28,34 @@ public class CountOccurenceWordByFile {
 
 	static class Map extends Mapper<LongWritable, Text, Text, Text> {
 		Text one = new Text("1");
-
+		String fileName;
+		String line;
+		String clearLine;
+		String word;
+		Text outputMap = new Text();
 		// format input offset line, output filename/word\t1
 		public void map(LongWritable clef, Text valeur, Context context)
 				throws IOException, InterruptedException {
 			//we get the name of the file from the context
-			String fileName = ((FileSplit) context.getInputSplit()).getPath()
+			fileName = ((FileSplit) context.getInputSplit()).getPath()
 					.getName();
-			String line = valeur.toString().toLowerCase();
+			line = valeur.toString().toLowerCase();
 			// remove balise html, then ponctuation
-			String clearLine = removePonctuation(line.replaceAll("\\<[^>]*>",
-					" "));
+			clearLine = removePonctuation(line.replaceAll("\\<[^>]*>"," "));
 			StringTokenizer st = new StringTokenizer(clearLine);
-			String word;
 			//we remove one letter word
 			while (st.hasMoreTokens()) {
 				word = st.nextToken();
 				if (word.length() > 1) {
-					context.write(new Text(fileName + separator + word), one);
+					outputMap.set(fileName + separator + word);
+					context.write(outputMap, one);
 				}
 			}
 		}
 
 		public static String removePonctuation(String stringToClear) {
-			String stringCleared = stringToClear.replace(".", " ");
+			String stringCleared;
+			stringCleared = stringToClear.replace(".", " ");
 			stringCleared = stringCleared.replace(",", " ");
 			stringCleared = stringCleared.replace(";", " ");
 			stringCleared = stringCleared.replace(":", " ");
@@ -84,8 +90,9 @@ public class CountOccurenceWordByFile {
 		public void reduce(Text clef, Iterable<Text> valeurs, Context context)
 				throws IOException, InterruptedException {
 			int numberOccurenceWordInFile = 0;
-			for (@SuppressWarnings("unused")
-			Text val : valeurs) {
+			for (Iterator<Text> iterator = valeurs.iterator(); iterator
+					.hasNext();) {
+				iterator.next();
 				numberOccurenceWordInFile++;
 			}
 			context.write(clef,
@@ -95,8 +102,10 @@ public class CountOccurenceWordByFile {
 
 	public static void main(String args[]) throws Exception {
 
+		Configuration conf = new Configuration();
+		conf.set("mapreduce.map.output.compress","true");
 		@SuppressWarnings("deprecation")
-		Job job = new Job();
+		Job job = new Job(conf);
 		job.setJarByClass(CountOccurenceWordByFile.class);
 
 		FileInputFormat.addInputPath(job, new Path(args[0]));

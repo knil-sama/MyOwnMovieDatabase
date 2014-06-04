@@ -5,6 +5,7 @@ import java.lang.InterruptedException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 
@@ -23,37 +24,49 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 public class SumOccurenceWordByFile {
 	static private String separator = new String("/");
 	static class Map extends Mapper<Text, Text, Text, Text> {
+		Text outputKeyMap = new Text();
+		Text outputValueMap = new Text();
 		/**
 		 *  @input filename/word	numberOccurence
 		 *  @output filename	word/numberOccurence 
 		 */
-		public void map(Text clef, Text valeur, Context context)
+		public void map(Text key, Text value, Context context)
 				throws IOException, InterruptedException {
-			String filenameAndWord = clef.toString();
+			String filenameAndWord = key.toString();
 			int indexSeparator = filenameAndWord.indexOf(separator);
             String filename = filenameAndWord.substring(0,indexSeparator);
             String word = filenameAndWord.substring(indexSeparator+1);
-			context.write(new Text(filename),   new Text(word + separator + valeur.toString()));
+            outputKeyMap.set(filename);
+            outputValueMap.set(word + separator + value.toString());
+			context.write(outputKeyMap,outputValueMap);
 		}
 	}
 	public static class Reduce extends Reducer<Text, Text, Text, Text> {
+		Iterator<String> iter;
+		Iterator<Text> iteratorValue;
+		ArrayList<String> wordsAndOccurences;
+		Text value = new Text();
+		Text outputKeyReduce = new Text();
+		Text outputValueReduce = new Text();
 		/**
 		* @input filename	word/numberOccurence
 		* @output filename/word	numberOccurence/numberOccurenceForFile
 		*/
-		public void reduce(Text clef, Iterable<Text> valeurs, Context context)
+		public void reduce(Text key, Iterable<Text> values, Context context)
 				throws IOException, InterruptedException {
 			int numberWordInFile = 0;
-			ArrayList<String> wordsAndOccurences = new ArrayList<String>();
+			wordsAndOccurences = new ArrayList<String>();
 			String wordAndOccurence;
 			String numberOccurence;
 			int indexOfSeparator;
-			Iterator<String> iter = wordsAndOccurences.iterator();
-			String filename = clef.toString();
+			iter = wordsAndOccurences.iterator();
+			String filename = key.toString();
 			String word;
-			//we calcul the total of word in a file
-			for (Text val : valeurs) {
-				wordAndOccurence = val.toString();
+			iteratorValue = values.iterator();
+			//we compute the total of word in a file
+			while(iteratorValue.hasNext()){
+				value.set(iteratorValue.next());
+				wordAndOccurence = value.toString();
 				indexOfSeparator = wordAndOccurence.lastIndexOf(separator);
 				wordsAndOccurences.add(wordAndOccurence.substring(indexOfSeparator+1));
 				numberOccurence = wordAndOccurence.substring(indexOfSeparator+1);
@@ -65,15 +78,22 @@ public class SumOccurenceWordByFile {
 				indexOfSeparator = wordAndOccurence.lastIndexOf(separator);
 				word = wordAndOccurence.substring(0,indexOfSeparator);
 				numberOccurence = wordAndOccurence.substring(indexOfSeparator+1);
-				context.write(new Text(filename + separator + word),new Text(numberOccurence + separator + String.valueOf(numberWordInFile)));
+				outputKeyReduce.set(filename + separator + word);
+				outputValueReduce.set(numberOccurence + separator + String.valueOf(numberWordInFile));
+				context.write(outputKeyReduce,outputValueReduce);
 			}
 		}
 	}
 
 	public static void main(String args[]) throws Exception {
-
+		if (args.length != 2) {
+			System.err.println("Usage : Template <source> <destination>");
+			System.exit(-1);
+		}
+		Configuration conf = new Configuration();
+		conf.set("mapreduce.map.output.compress","true");
 		@SuppressWarnings("deprecation")
-		Job job = new Job();
+		Job job = new Job(conf);
 		job.setJarByClass(SumOccurenceWordByFile.class);
 
 		FileInputFormat.addInputPath(job, new Path(args[0]));

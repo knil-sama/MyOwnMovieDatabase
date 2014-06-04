@@ -2,6 +2,7 @@ package src;
 
 import java.io.IOException;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -45,7 +46,8 @@ public class CountMovieDoneByActor {
 		}
 	}
 	public static class Reduce extends Reducer<Text,Text, Text, Text> {
-	
+		private Text outputReduce = new Text();
+
 		/**
 		 * @input 'pseudo' Nom, Prenom (num)	role
 		 * @output 'pseudo' Nom, Prenom (num)	number_of_role	number_of_role_as_himself 
@@ -64,7 +66,8 @@ public class CountMovieDoneByActor {
 				}
 				numberMoviePlayByActor++;
 			}
-			context.write(key, new Text(String.valueOf(numberMoviePlayByActor) + "\t" + String.valueOf(numberMoviePlayByActorLikeHimself)));
+			outputReduce.set(String.valueOf(numberMoviePlayByActor) + "\t" + String.valueOf(numberMoviePlayByActorLikeHimself));
+			context.write(key,outputReduce);
 		}
 	}
 	
@@ -74,8 +77,10 @@ public class CountMovieDoneByActor {
 			System.err.println("Usage : CountMovieDoneByActor <input path> <output path>");
 				System.exit(-1);
 		}
-		@SuppressWarnings("deprecation")
-		Job job = new Job();
+		Configuration conf = new Configuration();
+		conf.set("mapreduce.map.output.compress","true");
+		@SuppressWarnings("deprecation")		
+		Job job = new Job(conf);
 		job.setJarByClass(CountMovieDoneByActor.class);
 		job.setJobName("CountMovieDoneByActor");
 		

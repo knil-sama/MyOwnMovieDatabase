@@ -2,10 +2,11 @@ package src;
 
 import java.io.IOException;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.VIntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -18,9 +19,9 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
  * This Mapper Reducer is used to count the number of movies release during for each year
  */
 public class NumberMovieByReleaseYear {
-	public static class Map extends Mapper<LongWritable,Text, Text, IntWritable>{
+	public static class Map extends Mapper<LongWritable,Text, Text, VIntWritable>{
 		
-		private final static IntWritable one = new IntWritable(1);
+		private final VIntWritable one = new VIntWritable(1);
 		private Text year = new Text();
 		/**
 		 * @input "Titre_Film" (annee_tournage) titre_episode (#s.e)	annee_sortie
@@ -40,29 +41,33 @@ public class NumberMovieByReleaseYear {
 			context.write(year, one);
 		}
 	}
-	public static class Reduce extends Reducer<Text, IntWritable,Text, IntWritable>{
+	public static class Reduce extends Reducer<Text, VIntWritable,Text, VIntWritable>{
+		VIntWritable outputValueReduce = new VIntWritable();
 		/**
 		 * @input annee_sortie	1
 		 * @output annee_sortie	number_release
 		 */
-		public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException{
+		public void reduce(Text key, Iterable<VIntWritable> values, Context context) throws IOException, InterruptedException{
 			int sum = 0;
-			for(IntWritable value : values){
+			for(VIntWritable value : values){
 			 sum += value.get();
 			}
-			context.write(key, new IntWritable(sum));
+			outputValueReduce.set(sum);
+			context.write(key,outputValueReduce);
 		}
 	}
 	
 
 	public static void main(String[] args) throws Exception{
+		Configuration conf = new Configuration();
+		conf.set("mapreduce.map.output.compress","true");
 		@SuppressWarnings("deprecation")
-		Job job = new Job();
+		Job job = new Job(conf);
 		job.setJarByClass(NumberMovieByReleaseYear.class);
 		job.setJobName("NumberMovieByReleaseYear");
 		
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(IntWritable.class);
+		job.setOutputValueClass(VIntWritable.class);
 		
 		job.setMapperClass(Map.class);
 		job.setReducerClass(Reduce.class);

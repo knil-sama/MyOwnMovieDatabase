@@ -47,27 +47,38 @@ public class CalculTD_IDF {
 
 	public static class Map extends Mapper<Text, Text, DoubleWritable, Text> {
 		IDF_Filename[] podium = new IDF_Filename[NUMBER_PLACE_PODIUM];
+		String valeurString;
+		String[] tmpValeurs;
+		Double numberOccurenceByWord;
+		Double sumOccurenceByFile;
+		Double wordFrequency;
+		String[] tmpKey;
+		String filename;
+		String word;
+		String wordResearch;
+		Double td_idf;
+		IDF_Filename output_to_insert;
 		/**
 		 * every time we find the word we seek, we try to insert it in a podium sorted by desc order and with
 		 * limited place
 		 */
 		public void map(Text key, Text valeur, Context context)
 				throws IOException, InterruptedException {
-			String valeurString = valeur.toString();
-			String[] tmpValeurs = valeurString.split(SEPARATOR);
-			Double numberOccurenceByWord = Double.valueOf(tmpValeurs[0]);
-			Double sumOccurenceByFile = Double.valueOf(tmpValeurs[1]);
-			Double wordFrequency = Double.valueOf(tmpValeurs[2]);
-			String[] tmpKey = key.toString().split(SEPARATOR);
-			String filename = tmpKey[0];
-			String word = tmpKey[1];
-			String wordResearch = context.getConfiguration()
+			valeurString = valeur.toString();
+			tmpValeurs = valeurString.split(SEPARATOR);
+			numberOccurenceByWord = Double.valueOf(tmpValeurs[0]);
+			sumOccurenceByFile = Double.valueOf(tmpValeurs[1]);
+			wordFrequency = Double.valueOf(tmpValeurs[2]);
+			tmpKey = key.toString().split(SEPARATOR);
+			filename = tmpKey[0];
+			word = tmpKey[1];
+			wordResearch = context.getConfiguration()
 					.get("wordResearch");
-			Double td_idf = 0.0;
+			td_idf = 0.0;
 			if (word.equals(wordResearch)) {
 				td_idf = (numberOccurenceByWord / sumOccurenceByFile)
 						* Math.log(NUMBER_FILE_INPUT / wordFrequency);
-				IDF_Filename output_to_insert = new IDF_Filename(td_idf,
+				output_to_insert = new IDF_Filename(td_idf,
 						filename);
 				// insert sort desc
 				insertionSort(podium, output_to_insert);	
@@ -94,6 +105,7 @@ public class CalculTD_IDF {
 			}
 			// we use conf to send the word that the user input
 			Configuration conf = new Configuration();
+			conf.set("mapreduce.map.output.compress","true");
 			conf.set("wordResearch", args[2].toLowerCase());
 			@SuppressWarnings("deprecation")
 			Job job = new Job(conf);
