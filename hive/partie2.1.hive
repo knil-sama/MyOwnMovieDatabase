@@ -1,0 +1,72 @@
+
+create external table genre(movie_title string, year_release int, genre string)
+row format delimited fields terminated by '|'                                  
+stored as textfile                                                             
+location '/hive/genre';
+
+hadoop fs -ls /data/genre.csv /hive/genre/
+
+
+create table country(name string, episode string, year int, country string) 
+row format delimited fields terminated by '|'                                  
+stored as textfile;
+
+create table region(name string, episode string, year int, region string) 
+row format delimited fields terminated by '|'                                  
+stored as textfile                           
+		
+insert into table region 
+select name, episode, year, country 
+from country where country IN ("USA", "France", "Japan")
+and name!='' 
+																									insert into table region 
+select name, episode, year, "World" 
+from country where country NOT IN ("USA", "France", "Japan")
+and name!='' 
+             
+																								select region, count(*) from region group by region;
+
+select genre, year_release, count(*) count
+from genre LEFT JOIN region on (genre.movie_title = region.name)
+where year_release >= 1970 and year_release <=2010
+group by genre, year_release, region
+order by year_release, count DESC
+LIMIT 10;
+
+---------------------------------
+
+create table distributor(film_title STRING, 
+film_year int, 
+serie string, 
+distributor string, 
+country_code string, 
+year_released int, 
+region string, media string)
+row format delimited fields terminated by '|'                                  
+stored as textfile;
+
+
+LOAD DATA LOCAL INPATH '/opt/cloud/distributors.csv' OVERWRITE INTO TABLE distributor;
+
+select distributor, count(*) count
+from distributor
+group by distributor
+order by count DESC
+LIMIT 10;
+--------------------------------
+
+create table production_company(film_title STRING, 
+film_year int, 
+serie string, 
+company_name string, 
+country_code string)
+row format delimited fields terminated by '|'                                  
+stored as textfile;
+
+LOAD DATA LOCAL INPATH '/opt/cloud/production-companies.csv' OVERWRITE INTO TABLE production_company;
+
+select company_name, count(*) count
+from production_company
+group by company_name
+order by count DESC
+LIMIT 10;
