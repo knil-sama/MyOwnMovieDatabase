@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import re
+import re,sys
 
 if len(sys.argv) != 3:
 	print
@@ -22,6 +22,7 @@ def filmAndYear(string):
 	name = name[1:-1]
 	"""	
 	name = string[0:string.find('(')]
+	name = name.replace('"', '').replace('"', '').strip()
 
 	found = re.search(r'\(\d{4}\)',string)
 	year = found.group() if found is not None else ""
@@ -29,9 +30,13 @@ def filmAndYear(string):
 
 	found = re.search(r'(:? \{.+\})', string)
 	extra = found.group() if found is not None else ""
+	extra = extra.replace('{', '').replace('}', '').strip()
 
 	found = re.search(r'(:?\([^\(^\)]+\)$)', string)
 	role = found.group() if found is not None else ""
+
+	role = role.replace('(', '').replace(')', '').strip()
+	
 
 	if role[1:-1] == year:
 		role = ""

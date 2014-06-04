@@ -29,6 +29,11 @@ def filmAndYear(string):
 
 	found = re.search(r'(:?\(.+\))', string)
 	role = found.group() if found is not None else ""
+	
+	role = role.replace('[', '').replace(']', '')
+	role += ">>"
+
+	name = name.replace('"', '')
 
 	return name,year,extra,role
 
@@ -50,6 +55,9 @@ def filmYearCharacter(bigstring):
 
 	film = bigstring[0:bigstring.find("(")].strip()
 
+	character = character.replace('[', '').replace(']','')
+	film = film.replace('"', '')
+
 	return film,year,character
 	
 
@@ -57,28 +65,40 @@ def filmYearCharacter(bigstring):
 actorfilm = ""
 line = fr.readline()
 actorcount = 0
+writebuffer = ""
+writeat = 1000
 while line!="":
+	if writeat == 0:
+		fw.write(writebuffer)
+		writebuffer = ""
+		writeat = 1000
+		print str(actorcount) + " actors written"
+
 	if line == "\n":
 		linewritten = actorfilm.count("\n")
 		actorcount += 1
-		print str(actorcount) + " actors treated " + str(linewritten) + " written"
-		fw.write(actorfilm)
+		#print str(actorcount) + " actors treated " + str(linewritten) + " written"
+		#fw.write(actorfilm)
+		writebuffer += actorfilm
+		writeat = writeat - 1
 		actorfilm = ""
 		actor = ""
 		line = fr.readline()
 		continue
 	
 	if actorfilm == "":
-		actor = line[0:line.find("\t")]
+		actor = line[0:line.find("\t")].replace('"', '')
 		filmstring = line[line.find("\t"):].strip()
 		film,year,character = filmYearCharacter(filmstring)
 		actorfilm += actor + "|" + film + "|" + year + "|" + character + "\n"
 		line = fr.readline()
 		continue
+
 	
 	filmstring = line.strip();
 	film,year,character = filmYearCharacter(filmstring)
 	actorfilm += actor + "|" + film + "|" + year + "|" + character + "\n"
 	line = fr.readline()
+	
 
-fw.write(actorfilm)
+fw.write(writebuffer)
