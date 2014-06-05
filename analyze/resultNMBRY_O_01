@@ -1,0 +1,75 @@
+14/06/04 22:20:21 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+14/06/04 22:20:22 INFO client.RMProxy: Connecting to ResourceManager at /0.0.0.0:8032
+14/06/04 22:20:23 WARN mapreduce.JobSubmitter: Hadoop command-line option parsing not performed. Implement the Tool interface and execute your application with ToolRunner to remedy this.
+14/06/04 22:20:23 INFO input.FileInputFormat: Total input paths to process : 1
+14/06/04 22:20:23 INFO mapreduce.JobSubmitter: number of splits:1
+14/06/04 22:20:24 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_1401905723738_0005
+14/06/04 22:20:24 INFO impl.YarnClientImpl: Submitted application application_1401905723738_0005
+14/06/04 22:20:24 INFO mapreduce.Job: The url to track the job: http://knil-VirtualBox:8088/proxy/application_1401905723738_0005/
+14/06/04 22:20:24 INFO mapreduce.Job: Running job: job_1401905723738_0005
+14/06/04 22:20:36 INFO mapreduce.Job: Job job_1401905723738_0005 running in uber mode : false
+14/06/04 22:20:36 INFO mapreduce.Job:  map 0% reduce 0%
+14/06/04 22:20:54 INFO mapreduce.Job:  map 33% reduce 0%
+14/06/04 22:20:57 INFO mapreduce.Job:  map 59% reduce 0%
+14/06/04 22:21:00 INFO mapreduce.Job:  map 67% reduce 0%
+14/06/04 22:21:02 INFO mapreduce.Job:  map 100% reduce 0%
+14/06/04 22:21:20 INFO mapreduce.Job:  map 100% reduce 65%
+14/06/04 22:21:23 INFO mapreduce.Job:  map 100% reduce 67%
+14/06/04 22:21:31 INFO mapreduce.Job:  map 100% reduce 100%
+14/06/04 22:21:31 INFO mapreduce.Job: Job job_1401905723738_0005 completed successfully
+14/06/04 22:21:32 INFO mapreduce.Job: Counters: 49
+	File System Counters
+		FILE: Number of bytes read=33256
+		FILE: Number of bytes written=251975
+		FILE: Number of read operations=0
+		FILE: Number of large read operations=0
+		FILE: Number of write operations=0
+		HDFS: Number of bytes read=130505005
+		HDFS: Number of bytes written=1394
+		HDFS: Number of read operations=6
+		HDFS: Number of large read operations=0
+		HDFS: Number of write operations=2
+	Job Counters 
+		Launched map tasks=1
+		Launched reduce tasks=1
+		Data-local map tasks=1
+		Total time spent by all maps in occupied slots (ms)=23974
+		Total time spent by all reduces in occupied slots (ms)=25760
+		Total time spent by all map tasks (ms)=23974
+		Total time spent by all reduce tasks (ms)=25760
+		Total vcore-seconds taken by all map tasks=23974
+		Total vcore-seconds taken by all reduce tasks=25760
+		Total megabyte-seconds taken by all map tasks=24549376
+		Total megabyte-seconds taken by all reduce tasks=26378240
+	Map-Reduce Framework
+		Map input records=2822031
+		Map output records=2822031
+		Map output bytes=16932186
+		Map output materialized bytes=33248
+		Input split bytes=107
+		Combine input records=0
+		Combine output records=0
+		Reduce input groups=137
+		Reduce shuffle bytes=33248
+		Reduce input records=2822031
+		Reduce output records=137
+		Spilled Records=5644062
+		Shuffled Maps =1
+		Failed Shuffles=0
+		Merged Map outputs=1
+		GC time elapsed (ms)=886
+		CPU time spent (ms)=27030
+		Physical memory (bytes) snapshot=341196800
+		Virtual memory (bytes) snapshot=1605419008
+		Total committed heap usage (bytes)=193761280
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters 
+		Bytes Read=130504898
+	File Output Format Counters 
+		Bytes Written=1394
