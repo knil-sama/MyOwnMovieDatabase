@@ -28,8 +28,13 @@ and name!=''
 create table region_partitioned(name string, episode string) 
 partitioned by (year int,region string)
 row format delimited fields terminated by '|'                                  
-stored as textfile      		
-
+stored as orc
+tblproperties ("orc.compress"="SNAPPY")
+//the partition mean that now when we use region="USA" for example the query we only get "USA" related data before compute the query
+//se this site http://blog.safaribooksonline.com/2012/12/03/tip-partitioning-data-in-hive/
+//orc mean we use a algorithm to compress our data, so the I/O et space are shorten
+// se this site for information http://blog.erdemagaoglu.com/post/4605524309/lzo-vs-snappy-vs-lzf-vs-zlib-a-comparison-of
+//for loading a partitioned table we need to load from a unpartitioned table, the partioned element must be in the end
 SET hive.exec.dynamic.partition = true;
 SET hive.exec.dynamic.partition.mode = nonstrict;
 INSERT OVERWRITE TABLE region_partition PARTITION(year, region) SELECT name, episode, year, region FROM region;																	select region, count(*) from region group by region;
