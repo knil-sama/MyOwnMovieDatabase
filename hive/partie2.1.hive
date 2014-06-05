@@ -18,13 +18,21 @@ stored as textfile
 insert into table region 
 select name, episode, year, country 
 from country where country IN ("USA", "France", "Japan")
-and name!='' 
-																									insert into table region 
+and name!=''
+
+insert into table region 
 select name, episode, year, "World" 
 from country where country NOT IN ("USA", "France", "Japan")
 and name!='' 
-             
-																								select region, count(*) from region group by region;
+
+create table region_partitioned(name string, episode string) 
+partitioned by (year int,region string)
+row format delimited fields terminated by '|'                                  
+stored as textfile      		
+
+SET hive.exec.dynamic.partition = true;
+SET hive.exec.dynamic.partition.mode = nonstrict;
+INSERT OVERWRITE TABLE region_partition PARTITION(year, region) SELECT name, episode, year, region FROM region;																	select region, count(*) from region group by region;
 
 select genre, year_release, count(*) count
 from genre LEFT JOIN region on (genre.movie_title = region.name)
@@ -47,6 +55,17 @@ stored as textfile;
 
 
 LOAD DATA LOCAL INPATH '/opt/cloud/distributors.csv' OVERWRITE INTO TABLE distributor;
+
+
+create table distributor_partitioned(film_title STRING, 
+film_year int, 
+serie string, 
+distributor string, 
+country_code string, 
+region string, media string)
+partitioned by (year_release int)
+row format delimited fields terminated by '|'                                  
+stored as textfile;
 
 select distributor, count(*) count
 from distributor
