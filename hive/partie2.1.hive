@@ -1,84 +1,105 @@
+set hive.exec.dynamic.partition.mode=nonstrict;
+set hive.exec.max.dynamic.partitions.pernode=10000;
 
-create external table genre(movie_title string, year_release int, genre string)
-row format delimited fields terminated by '|'                                  
-stored as textfile                                                             
-location '/hive/genre';
-
-hadoop fs -ls /data/genre.csv /hive/genre/
-
-
-create table country(name string, episode string, year int, country string) 
-row format delimited fields terminated by '|'                                  
+create table genre_tmp(movie_title string,year_release int, genre string)
+row format delimited fields terminated by '|'
 stored as textfile;
 
-create table region(name string, episode string, year int, region string) 
-row format delimited fields terminated by '|'                                  
-stored as textfile                           
-		
-insert into table region 
-select name, episode, year, country 
-from country where country IN ("USA", "France", "Japan")
-and name!=''
+LOAD DATA LOCAL INPATH '/home/knil/data_csv/genres.csv' OVERWRITE INTO TABLE genre_tmp;
 
-insert into table region 
-select name, episode, year, "World" 
-from country where country NOT IN ("USA", "France", "Japan")
-and name!='' 
-
-create table region_partitioned(name string, episode string) 
-partitioned by (year int,region string)
+create table genre_table(movie_title string, genre string)
+partitioned by(year_release int)
 row format delimited fields terminated by '|'                                  
 stored as orc
-tblproperties ("orc.compress"="SNAPPY")
+tblproperties ("orc.compress"="SNAPPY");
+
+INSERT OVERWRITE TABLE genre_table PARTITION(year_release) SELECT movie_title, genre, year_release FROM genre_tmp WHERE not(movie_title="" or year_release is null or genre=""); 
+
+
+//COUNTRY
+
+create table country_tmp(movie_title string, episode string, year_release int, region string) 
+row format delimited fields terminated by '|'                           stored as textfile;
+
+LOAD DATA LOCAL INPATH '/home/knil/data_csv/countries.csv' OVERWRITE INTO TABLE country_tmp;
+
+create table country_table(movie_title string, episode string)
+partitioned by (year_release int, region string) 
+row format delimited fields terminated by '|'  
+stored as orc
+tblproperties ("orc.compress"="SNAPPY");
+	
+insert into table country_table partition(year_release, region) SELECT movie_title, episode, year_release, region
+from country_tmp where region IN ("USA", "France", "Japan")
+and movie_title!='' and not year_release is null and region!='';
+
+insert into table country_table
+partition(year_release,region) 
+select movie_title, episode, year_release, "World" 
+from country_tmp where region NOT IN ("USA", "France", "Japan")
+and movie_title!='' and not year_release is null and region!='';
+
 //the partition mean that now when we use region="USA" for example the query we only get "USA" related data before compute the query
 //se this site http://blog.safaribooksonline.com/2012/12/03/tip-partitioning-data-in-hive/
 //orc mean we use a algorithm to compress our data, so the I/O et space are shorten
 // se this site for information http://blog.erdemagaoglu.com/post/4605524309/lzo-vs-snappy-vs-lzf-vs-zlib-a-comparison-of
 //for loading a partitioned table we need to load from a unpartitioned table, the partioned element must be in the end
-SET hive.exec.dynamic.partition = true;
-SET hive.exec.dynamic.partition.mode = nonstrict;
-INSERT OVERWRITE TABLE region_partition PARTITION(year, region) SELECT name, episode, year, region FROM region;																	select region, count(*) from region group by region;
 
-select genre, year_release, count(*) count
-from genre LEFT JOIN region on (genre.movie_title = region.name)
-where year_release >= 1970 and year_release <=2010
-group by genre, year_release, region
-order by year_release, count DESC
-LIMIT 10;
+//need to join on class as well
+select year_release,region, genre, number_movies, (number_movies/total_movies)*100 from(
+	select year_release, region, genre,number_movies, rank() over(PARTITION BY year_release, region ORDER BY number_movies desc) rank,sum(number_movies) OVER(PARTITION BY year_release, region) as total_movies from (
+		select regions.year_release, regions.region, genre, count(regions.movie_title) as number_movies from
+			country_table as regions INNER join genre_table as genres
+			on (genres.movie_title=regions.movie_title and (regions.year_release >= 1970 and regions.year_release <= 1970) and  (genres.year_release >= 1970 and genres.year_release <= 1970))
+			group by regions.year_release, regions.region,genre
+	)joined_table
+)complete_table where rank < 6
+SORT BY year_release,region, number_movies desc;
+
+///pour les compagnies de productions
+
 
 ---------------------------------
 
-create table distributor(film_title STRING, 
-film_year int, 
+create table distributor_tmp(movie_title string, 
+year_production int, 
 serie string, 
 distributor string, 
 country_code string, 
-year_released int, 
-region string, media string)
+year_release int, 
+region string, 
+media string)
 row format delimited fields terminated by '|'                                  
 stored as textfile;
 
+LOAD DATA LOCAL INPATH '/home/knil/data_csv/distributors.csv' OVERWRITE INTO TABLE distributor_tmp;
 
-LOAD DATA LOCAL INPATH '/opt/cloud/distributors.csv' OVERWRITE INTO TABLE distributor;
-
-
-create table distributor_partitioned(film_title STRING, 
-film_year int, 
+create table distributor_table(movie_title string, 
+year_production int, 
 serie string, 
 distributor string, 
-country_code string, 
-region string, media string)
-partitioned by (year_release int)
+country_code string 
+)
+partitioned by (year_release int, region string, media string)
 row format delimited fields terminated by '|'                                  
-stored as textfile;
+stored as orc
+tblproperties ("orc.compress"="SNAPPY");
 
-select distributor, count(*) count
-from distributor
-group by distributor
-order by count DESC
-LIMIT 10;
+insert into table distributor_table partition(year_release, region, media) SELECT movie_title,year_production, serie, distributor, country_code, year_release, region,media
+from distributor_tmp where region IN ("USA", "France", "Japan")
+and movie_title!='' and distributor !="" and not year_release is null and region!='' and media!="";
+
+
+insert into table distributor_table partition(year_release, region,media) SELECT movie_title,year_production, serie, distributor, country_code, year_release, "World", media
+from distributor_tmp where region NOT IN ("USA", "France", "Japan")
+and movie_title!='' and not year_release is null and region!='' and media!="";
+
+
+-------------------------------
+
+Production Company
+
 --------------------------------
-
 create table production_company(film_title STRING, 
 film_year int, 
 serie string, 
