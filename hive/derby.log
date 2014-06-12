@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Thu Jun 12 13:02:06 CEST 2014:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.10.1.1 - (1458268): instance a816c00e-0146-8fbd-e756-00000168d670 
+on database directory /home/knil/MyOwnMovieDatabase/hive/metastore_db with class loader sun.misc.Launcher$AppClassLoader@a0002df 
+Loaded from file:/home/knil/apache-hive-0.13.0-bin/lib/derby-10.10.1.1.jar
+java.vendor=Oracle Corporation
+java.runtime.version=1.7.0_55-b14
+user.dir=/home/knil/MyOwnMovieDatabase/hive
+os.name=Linux
+os.arch=amd64
+os.version=3.11.0-12-generic
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''
