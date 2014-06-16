@@ -1,1 +1,4 @@
 This project is a a student project of Master first years in Cloud computing
+We try to solve problems on imb's data using Pig, MapReduce and Hive
+This github contain all our code and configuration, the only thing that isn't here are the data we use because of their size.
+To run our program, fetch the file for imb, the use the script in data for preformat, for MapReduce this data are fine but for hive you need to use the python file in listToCSV before usign the hive script.
